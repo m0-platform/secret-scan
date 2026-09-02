@@ -1,0 +1,59 @@
+###############################################################################
+# Composite Secret Scan (Gitleaks CLI)
+#
+# Called from .github/workflows/secret-scan.yml via `$/.github/actions/secret-scan`
+# so this directory (including gitleaks.toml) is loaded at the same commit the
+# caller pinned. Reusable workflows cannot otherwise read sibling files.
+#
+# Uses the Gitleaks CLI binary directly (MIT licensed, free for private repos).
+###############################################################################
+
+name: Secret Scan (Gitleaks)
+description: Scan the checked-out repo with the M0 org Gitleaks baseline.
+
+inputs:
+  gitleaks_version:
+    description: Gitleaks CLI version to install (without 'v' prefix).
+    required: false
+    default: "8.24.2"
+  config_path:
+    description: Path to a repo-level .gitleaks.toml allow-list (relative to repo root).
+    required: false
+    default: ".gitleaks.toml"
+  fail_on_findings:
+    description: Exit non-zero (fail the job) if secrets are detected.
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Install Gitleaks ${{ inputs.gitleaks_version }}
+      shell: bash
+      env:
+        VERSION: ${{ inputs.gitleaks_version }}
+      run: |
+        curl -sSfL \
+          "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+          | tar -xz gitleaks
+        sudo mv gitleaks /usr/local/bin/gitleaks
+        gitleaks version
+
+    - name: Compose Gitleaks config
+      shell: bash
+      env:
+        ORG_CONFIG: ${{ github.action_path }}/gitleaks.toml
+        REPO_CONFIG: ${{ github.workspace }}/${{ inputs.config_path }}
+        EFFECTIVE_CONFIG: /tmp/effective-gitleaks.toml
+      run: python3 "${{ github.action_path }}/compose-config.py"
+
+    - name: Run Gitleaks
+      shell: bash
+      env:
+        EXIT_CODE: ${{ inputs.fail_on_findings == 'true' && '1' || '0' }}
+      run: |
+        gitleaks git \
+          --config=/tmp/effective-gitleaks.toml \
+          --exit-code="${EXIT_CODE}" \
+          --verbose \
+          --redact
