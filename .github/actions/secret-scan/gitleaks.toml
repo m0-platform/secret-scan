@@ -34,6 +34,8 @@ regexes = [
   '''^0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80$''',
   # bytes32(0) / DEFAULT_ADMIN_ROLE and 0x..01 dummy keys.
   '''^0x0{63}[01]$''',
+  # 1Password references. `op run` injects the secret at runtime.
+  '''^op://\S+$''',
 ]
 
 [[rules]]
