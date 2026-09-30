@@ -26,8 +26,12 @@ useDefault = true
 # regexTarget = "secret" so a line that also contains a 32-byte key is not
 # cleared just because an address appears somewhere on it.
 [allowlist]
-description = "Public EVM addresses and universally public 32-byte values"
+description = "Public EVM addresses, 1Password refs, and Foundry broadcast artifacts"
 regexTarget = "secret"
+# Foundry broadcast JSON is transaction hashes, logs, and bytecode.
+paths = [
+  '''(^|/)broadcast/''',
+]
 regexes = [
   '''^0x[0-9a-fA-F]{40}$''',
   # Anvil/Hardhat account #0 key (Foundry docs).
