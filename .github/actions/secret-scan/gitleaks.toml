@@ -34,11 +34,103 @@ regexTarget = "secret"
 regexes = [
   '''^0x[0-9a-fA-F]{40}$''',
   # Anvil/Hardhat account #0 key (Foundry docs).
-  '''^0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80$''',
+  '''(?i)^0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80$''',
   # bytes32(0) / DEFAULT_ADMIN_ROLE and 0x..01 dummy keys.
   '''^0x0{63}[01]$''',
+  # bytes32(type(uint256).max). Used as a mock return, not a key.
+  '''(?i)^0xf{64}$''',
   # 1Password references. `op run` injects the secret at runtime.
   '''^op://\S+$''',
+  # EIP-1967 implementation and admin slots.
+  '''(?i)^0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc$''',
+  '''(?i)^0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103$''',
+  # EIP-712 domain typehash.
+  '''(?i)^0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f$''',
+  # secp256k1n / 2, the ECDSA lower-s bound.
+  '''(?i)^0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0$''',
+  # secp256k1n, the curve order.
+  '''(?i)^0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141$''',
+  # Highest-bit mask used to split a compact ECDSA signature. Not a key.
+  '''(?i)^0x7f{63}$''',
+  # keccak256("1"), the EIP-712 version hash.
+  '''(?i)^0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6$''',
+  # EIP-1967 beacon slot.
+  '''(?i)^0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50$''',
+  # Wormhole devnet guardian and ganache keys. Published in wormhole-foundation/wormhole scripts/devnet-consts.json.
+  '''(?i)^0x00d39587c3556f289677a837c7f3c0817cb7541ce6e38a243a4bdc761d534c5e$''',
+  '''(?i)^00d39587c3556f289677a837c7f3c0817cb7541ce6e38a243a4bdc761d534c5e$''',
+  '''(?i)^0x01b8c448ce2c1d43cfc5938d3a57086f88e3dc43bb8b08028ecb7a7924f4676f$''',
+  '''(?i)^01b8c448ce2c1d43cfc5938d3a57086f88e3dc43bb8b08028ecb7a7924f4676f$''',
+  '''(?i)^0x053a6527124b309d914a47f5257a995e9b0ad17f14659f90ed42af5e6e262b6a$''',
+  '''(?i)^053a6527124b309d914a47f5257a995e9b0ad17f14659f90ed42af5e6e262b6a$''',
+  '''(?i)^0x0874049f95d55fb76916262dc70571701b5c4cc5900c0691af75f1a8a52c8268$''',
+  '''(?i)^0874049f95d55fb76916262dc70571701b5c4cc5900c0691af75f1a8a52c8268$''',
+  '''(?i)^0x17646a6ba14a541957fc7112cc973c0b3f04fce59484a92c09bb45a0b57eb740$''',
+  '''(?i)^17646a6ba14a541957fc7112cc973c0b3f04fce59484a92c09bb45a0b57eb740$''',
+  '''(?i)^0x1cbf4e1388b81c9020500fefc83a7a81f707091bb899074db1bfce4537428112$''',
+  '''(?i)^1cbf4e1388b81c9020500fefc83a7a81f707091bb899074db1bfce4537428112$''',
+  '''(?i)^0x1db31a6ba3bcd54d2e8a64f8a2415064265d291593450c6eb7e9a6a986bd9400$''',
+  '''(?i)^1db31a6ba3bcd54d2e8a64f8a2415064265d291593450c6eb7e9a6a986bd9400$''',
+  '''(?i)^0x21d7212f3b4e5332fd465877b64926e3532653e2798a11255a46f533852dfe46$''',
+  '''(?i)^21d7212f3b4e5332fd465877b64926e3532653e2798a11255a46f533852dfe46$''',
+  '''(?i)^0x395df67f0c2d2d9fe1ad08d1bc8b6627011959b79c53d7dd6a3536a33ab8a4fd$''',
+  '''(?i)^395df67f0c2d2d9fe1ad08d1bc8b6627011959b79c53d7dd6a3536a33ab8a4fd$''',
+  '''(?i)^0x3fbf1e46f6da69e62aed5670f279e818889aa7d8f1beb7fd730770fd4f8ea3d7$''',
+  '''(?i)^3fbf1e46f6da69e62aed5670f279e818889aa7d8f1beb7fd730770fd4f8ea3d7$''',
+  '''(?i)^0x47b65307d0d654fd4f786b908c04af8fface7710fc998b37d219de19c39ee58c$''',
+  '''(?i)^47b65307d0d654fd4f786b908c04af8fface7710fc998b37d219de19c39ee58c$''',
+  '''(?i)^0x48d23cc417a30674e907a2403f109f082d92e197823d02e6a423c6aeb8e41204$''',
+  '''(?i)^48d23cc417a30674e907a2403f109f082d92e197823d02e6a423c6aeb8e41204$''',
+  '''(?i)^0x4e95cb2ff3f7d5e963631ad85c28b1b79cb370f21c67cbdd4c2ffb0bf664aa06$''',
+  '''(?i)^4e95cb2ff3f7d5e963631ad85c28b1b79cb370f21c67cbdd4c2ffb0bf664aa06$''',
+  '''(?i)^0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d$''',
+  '''(?i)^4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d$''',
+  '''(?i)^0x53b05697596ba04067e40be8100c9194cbae59c90e7870997de57337497172e9$''',
+  '''(?i)^53b05697596ba04067e40be8100c9194cbae59c90e7870997de57337497172e9$''',
+  '''(?i)^0x6370fd033278c143179d81c5526140625662b8daa446c22ee2d73db3707e620c$''',
+  '''(?i)^6370fd033278c143179d81c5526140625662b8daa446c22ee2d73db3707e620c$''',
+  '''(?i)^0x646f1ce2fdad0e6deeeb5c7e8e5543bdde65e86029e2fd9fc169899c440a7913$''',
+  '''(?i)^646f1ce2fdad0e6deeeb5c7e8e5543bdde65e86029e2fd9fc169899c440a7913$''',
+  '''(?i)^0x6cbed15c793ce57650b9877cf6fa156fbef513c4e6134f022a85b1ffdd59b2a1$''',
+  '''(?i)^6cbed15c793ce57650b9877cf6fa156fbef513c4e6134f022a85b1ffdd59b2a1$''',
+  '''(?i)^0x7095b73fa951fd117d54f3bca130b8088625db2d60d94d4f064791dc1a792b29$''',
+  '''(?i)^7095b73fa951fd117d54f3bca130b8088625db2d60d94d4f064791dc1a792b29$''',
+  '''(?i)^0x70d8f1c9534a0ab61a020366b831a494057a289441c07be67e4288c44bc6cd5d$''',
+  '''(?i)^70d8f1c9534a0ab61a020366b831a494057a289441c07be67e4288c44bc6cd5d$''',
+  '''(?i)^0x77c5495fbb039eed474fc940f29955ed0531693cc9212911efd35dff0373153f$''',
+  '''(?i)^77c5495fbb039eed474fc940f29955ed0531693cc9212911efd35dff0373153f$''',
+  '''(?i)^0x829e924fdf021ba3dbbc4225edfece9aca04b929d6e75613329ca6f1d31c0bb4$''',
+  '''(?i)^829e924fdf021ba3dbbc4225edfece9aca04b929d6e75613329ca6f1d31c0bb4$''',
+  '''(?i)^0x9b9c613a36396172eab2d34d72331c8ca83a358781883a535d2941f66db07b24$''',
+  '''(?i)^9b9c613a36396172eab2d34d72331c8ca83a358781883a535d2941f66db07b24$''',
+  '''(?i)^0x9f790d3f08bc4b5cd910d4278f3deb406e57bb5e924906ccd52052bb078ccd47$''',
+  '''(?i)^9f790d3f08bc4b5cd910d4278f3deb406e57bb5e924906ccd52052bb078ccd47$''',
+  '''(?i)^0xa453611d9419d0e56f499079478fd72c37b251a94bfde4d19872c44cf65386e3$''',
+  '''(?i)^a453611d9419d0e56f499079478fd72c37b251a94bfde4d19872c44cf65386e3$''',
+  '''(?i)^0xadd53f9a7e588d003326d1cbf9e4a43c061aadd9bc938c843a79e7b4fd2ad743$''',
+  '''(?i)^add53f9a7e588d003326d1cbf9e4a43c061aadd9bc938c843a79e7b4fd2ad743$''',
+  '''(?i)^0xb0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773$''',
+  '''(?i)^b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773$''',
+  '''(?i)^0xb20cc49d6f2c82a5e6519015fc18aa3e562867f85f872c58f1277cfbd2a0c8e4$''',
+  '''(?i)^b20cc49d6f2c82a5e6519015fc18aa3e562867f85f872c58f1277cfbd2a0c8e4$''',
+  '''(?i)^0xc3b2e45c422a1602333a64078aeb42637370b0f48fe385f9cfa6ad54a8e0c47e$''',
+  '''(?i)^c3b2e45c422a1602333a64078aeb42637370b0f48fe385f9cfa6ad54a8e0c47e$''',
+  '''(?i)^0xc83d36423820e7350428dc4abe645cb2904459b7d7128adefe16472fdac397ba$''',
+  '''(?i)^c83d36423820e7350428dc4abe645cb2904459b7d7128adefe16472fdac397ba$''',
+  '''(?i)^0xcdbabfc2118eb00bc62c88845f3bbd03cb67a9e18a055101588ca9b36387006c$''',
+  '''(?i)^cdbabfc2118eb00bc62c88845f3bbd03cb67a9e18a055101588ca9b36387006c$''',
+  '''(?i)^0xcfb12303a19cde580bb4dd771639b0d26bc68353645571a8cff516ab2ee113a0$''',
+  '''(?i)^cfb12303a19cde580bb4dd771639b0d26bc68353645571a8cff516ab2ee113a0$''',
+  '''(?i)^0xd99b5b29e6da2528bf458b26237a6cf8655a3e3276c1cdc0de1f98cefee81c01$''',
+  '''(?i)^d99b5b29e6da2528bf458b26237a6cf8655a3e3276c1cdc0de1f98cefee81c01$''',
+  '''(?i)^0xda534d61a8da77b232f3a2cee55c0125e2b3e33a5cd8247f3fe9e72379445c3b$''',
+  '''(?i)^da534d61a8da77b232f3a2cee55c0125e2b3e33a5cd8247f3fe9e72379445c3b$''',
+  '''(?i)^0xe485d098507f54e7733a205420dfddbe58db035fa577fc294ebd14db90767a52$''',
+  '''(?i)^e485d098507f54e7733a205420dfddbe58db035fa577fc294ebd14db90767a52$''',
+  '''(?i)^0xeb94ff04accbfc8195d44b45e7c7da4c6993b2fbbfc4ef166a7675a905df9891$''',
+  '''(?i)^eb94ff04accbfc8195d44b45e7c7da4c6993b2fbbfc4ef166a7675a905df9891$''',
+  '''(?i)^0xeded5a2fdcb5bbbfa5b07f2a91393813420e7ac30a72fc935b6df36f8294b855$''',
+  '''(?i)^eded5a2fdcb5bbbfa5b07f2a91393813420e7ac30a72fc935b6df36f8294b855$'''
 ]
 
 [[rules]]
@@ -58,7 +150,7 @@ regexTarget = "secret"
 regexes = [
   # Anvil/Hardhat account #0 key (address 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266).
   # Published in the Foundry docs; used in tests so privateKeyToAccount succeeds.
-  '''^0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80$''',
+  '''(?i)^0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80$''',
   # bytes32(0) — DEFAULT_ADMIN_ROLE — and the 0x..01 dummy PRIVATE_KEY in tests.
   '''^0x0{63}[01]$''',
 ]
@@ -66,21 +158,33 @@ regexes = [
 # regexTarget = "match" sees the prefix captured above, including
 # `bytes32 ... TYPEHASH =\n    0x<64>`. The hex under test is at the end of
 # the match, so a PRIVATE_KEY written the same way stays a finding.
-# `bytes32` is required so a comment that merely says TYPEHASH = 0x<64>
-# is still reported.
+# `bytes32` or `uint256` is required so a comment that merely says
+# TYPEHASH = 0x<64> is still reported. Names are the structural ones:
+# TYPEHASH, STORAGE_LOCATION, VERSION_HASH, *_LOCATION, *_SLOT, *_DOMAIN_HASH, *Location.
 [[rules.allowlists]]
-description = "EIP-712 typehashes and ERC-7201 storage slots"
+description = "EIP-712 typehashes, ERC-7201 slots, and EIP-1967 slots"
 regexTarget = "match"
 regexes = [
-  '''(?is)bytes32\b.{0,180}?(TYPEHASH|STORAGE_LOCATION)\b\s*=\s*0x[0-9a-fA-F]{64}\b\s*$''',
+  '''(?is)(?:bytes32|uint256)\b.{0,240}?(?:TYPEHASH|STORAGE_LOCATION|VERSION_HASH|_LOCATION|_SLOT|_DOMAIN_HASH|Location)\b\s*=\s*0x[0-9a-fA-F]{64}\b\s*$''',
 ]
 
+# Event topic0 hashes in comments. The word Topic0 has to sit against the hex,
+# so a private key later in the file is not cleared by an earlier topic.
+[[rules.allowlists]]
+description = "Event signature topic0 hashes"
+regexTarget = "match"
+regexes = [
+  '''(?is)Topic0\b(?:\s|/){0,40}0x[0-9a-fA-F]{64}\b\s*$''',
+]
 # Path skip for this rule only. Upstream rules still scan these files, so a
 # named key committed under broadcast/ remains a finding.
 [[rules.allowlists]]
 description = "Foundry broadcast artifacts for the 0x 32-byte rule"
 paths = [
   '''(^|/)broadcast/''',
+  '''(^|/)broadcast\.log\.json$''',
+  '''(^|/)forge-std/''',
+  '''(^|/)solmate/''',
 ]
 
 # Keys are often written WITHOUT the 0x prefix in .env files
@@ -90,7 +194,7 @@ id = "bare-32-byte-hex"
 description = "32-byte hex literal without 0x prefix — possible EVM private key"
 regex = '''\b[0-9a-fA-F]{64}\b'''
 
-[rules.allowlist]
+[[rules.allowlists]]
 description = "Lockfiles, Foundry broadcast artifacts, and bytes32(0)/0x..01 without 0x prefix"
 regexTarget = "secret"
 regexes = [
@@ -98,6 +202,9 @@ regexes = [
 ]
 paths = [
   '''(^|/)broadcast/''',
+  '''(^|/)broadcast\.log\.json$''',
+  '''(^|/)forge-std/''',
+  '''(^|/)solmate/''',
   '''(^|/)package-lock\.json$''',
   '''(^|/)npm-shrinkwrap\.json$''',
   '''(^|/)yarn\.lock$''',
@@ -111,4 +218,13 @@ paths = [
   '''(^|/)Gemfile\.lock$''',
   '''(^|/)flake\.lock$''',
   '''(^|/)\.terraform\.lock\.hcl$''',
+]
+
+# Image digests and Git LFS pointers. The 64 hex chars are a content hash
+# sitting next to sha256:, not a key. A bare hex without that prefix still fails.
+[[rules.allowlists]]
+description = "sha256 image digests and Git LFS oids"
+regexTarget = "line"
+regexes = [
+  '''(?i)sha256:[0-9a-f]{64}''',
 ]
