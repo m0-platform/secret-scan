@@ -62,6 +62,10 @@ if typehash in after:
     raise SystemExit("KeyAfterTypehash.sol flagged the TYPEHASH")
 if wrapped_key not in by_file.get("CommentTypehash.sol", []):
     raise SystemExit("CommentTypehash.sol did not flag a TYPEHASH comment")
+if wrapped_key not in by_file.get("KeyAfterTopic.sol", []):
+    raise SystemExit("KeyAfterTopic.sol did not flag the private key after Topic0")
+if typehash in by_file.get("KeyAfterTopic.sol", []):
+    raise SystemExit("KeyAfterTopic.sol flagged the Topic0 hash")
 broadcast = [f for f in findings if f["File"].endswith("broadcast/leaked.env")]
 if not broadcast:
     raise SystemExit("broadcast/leaked.env was ignored entirely")
