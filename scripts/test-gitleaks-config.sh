@@ -34,7 +34,9 @@ pass_dir="${ROOT}/testdata/gitleaks/should-pass"
 report="$(mktemp)"
 
 echo "==> should-fail (expect evm-32-byte-hex and bare-32-byte-hex)"
-gitleaks dir "$fail_dir" --config="$ORG_CONFIG" --exit-code=0 --report-path="$report" --report-format=json --redact
+# No --redact: the assertions below compare the captured secret to the fixture.
+# Do not print that report.
+gitleaks dir "$fail_dir" --config="$ORG_CONFIG" --exit-code=0 --report-path="$report" --report-format=json --no-banner >/dev/null
 python3 - "$report" <<'PY'
 import json, sys
 path = sys.argv[1]
@@ -44,6 +46,20 @@ needed = {"evm-32-byte-hex", "bare-32-byte-hex"}
 missing = needed - rules
 if missing:
     raise SystemExit(f"missing rule ids {sorted(missing)}; got {sorted(rules)}")
+by_file = {}
+for f in findings:
+    by_file.setdefault(f["File"].rsplit("/", 1)[-1], []).append(f.get("Secret"))
+if not by_file.get("NamedKey.sol"):
+    raise SystemExit("NamedKey.sol produced no findings")
+wrapped_key = "0x" + ("ab" * 32)
+typehash = "0x" + ("11" * 32)
+if wrapped_key not in by_file.get("WrappedKey.sol", []):
+    raise SystemExit("WrappedKey.sol did not flag the wrapped private key")
+after = by_file.get("KeyAfterTypehash.sol", [])
+if wrapped_key not in after:
+    raise SystemExit("KeyAfterTypehash.sol did not flag the private key after the typehash")
+if typehash in after:
+    raise SystemExit("KeyAfterTypehash.sol flagged the TYPEHASH")
 print(f"found {len(findings)} finding(s) covering {sorted(needed)}")
 PY
 

@@ -1,0 +1,2 @@
+bytes32 constant FOO_TYPEHASH = 0x1111111111111111111111111111111111111111111111111111111111111111;
+uint256 constant PRIVATE_KEY = 0xabababababababababababababababababababababababababababababababab;
