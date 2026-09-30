@@ -1,0 +1,4 @@
+bytes32 public constant BALLOT_TYPEHASH = 0xcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd;
+bytes32 constant SPOKE_PORTAL_STORAGE_LOCATION = 0xcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd;
+bytes32 public constant CANCEL_AUTHORIZATION_TYPEHASH =
+    0xcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd;

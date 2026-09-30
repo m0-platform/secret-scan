@@ -1,0 +1,74 @@
+###############################################################################
+# Composite Secret Scan (Gitleaks CLI)
+#
+# Called from .github/workflows/secret-scan.yml via `$/.github/actions/secret-scan`
+# so this directory (including gitleaks.toml) is loaded at the same commit the
+# caller pinned. Reusable workflows cannot otherwise read sibling files.
+#
+# Uses the Gitleaks CLI binary directly (MIT licensed, free for private repos).
+###############################################################################
+
+name: Secret Scan (Gitleaks)
+description: Scan the checked-out repo with the M0 org Gitleaks baseline.
+
+inputs:
+  gitleaks_version:
+    description: Gitleaks CLI version to install (without 'v' prefix).
+    required: false
+    default: "8.24.2"
+  config_path:
+    description: Path to a repo-level .gitleaks.toml allow-list (relative to repo root).
+    required: false
+    default: ".gitleaks.toml"
+  fail_on_findings:
+    description: Exit non-zero (fail the job) if secrets are detected.
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Install Gitleaks ${{ inputs.gitleaks_version }}
+      shell: bash
+      env:
+        VERSION: ${{ inputs.gitleaks_version }}
+        # sha256 of gitleaks_8.24.2_linux_x64.tar.gz from the upstream checksums file.
+        # Trust lives in this pin, not in a checksum downloaded next to the tarball.
+        # Change gitleaks_version only together with this hash.
+        EXPECTED_SHA256: fa0500f6b7e41d28791ebc680f5dd9899cd42b58629218a5f041efa899151a8e
+      run: |
+        set -euo pipefail
+        if [ "$VERSION" != "8.24.2" ]; then
+          echo "ERROR: gitleaks ${VERSION} has no pinned checksum in this action." >&2
+          exit 1
+        fi
+        asset="gitleaks_${VERSION}_linux_x64.tar.gz"
+        work="${RUNNER_TEMP:-/tmp}/gitleaks-install"
+        dest="${RUNNER_TEMP:-/tmp}/gitleaks-bin"
+        mkdir -p "$work" "$dest"
+        curl -sSfL \
+          "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/${asset}" \
+          -o "$work/${asset}"
+        echo "${EXPECTED_SHA256}  $work/${asset}" | sha256sum -c -
+        tar -xzf "$work/${asset}" -C "$dest" gitleaks
+        echo "$dest" >> "$GITHUB_PATH"
+        "$dest/gitleaks" version
+
+    - name: Compose Gitleaks config
+      shell: bash
+      env:
+        ORG_CONFIG: ${{ github.action_path }}/gitleaks.toml
+        REPO_CONFIG: ${{ github.workspace }}/${{ inputs.config_path }}
+        EFFECTIVE_CONFIG: /tmp/effective-gitleaks.toml
+      run: python3 "${{ github.action_path }}/compose-config.py"
+
+    - name: Run Gitleaks
+      shell: bash
+      env:
+        EXIT_CODE: ${{ inputs.fail_on_findings == 'true' && '1' || '0' }}
+      run: |
+        gitleaks git \
+          --config=/tmp/effective-gitleaks.toml \
+          --exit-code="${EXIT_CODE}" \
+          --verbose \
+          --redact

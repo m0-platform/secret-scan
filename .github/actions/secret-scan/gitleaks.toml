@@ -1,0 +1,114 @@
+###############################################################################
+# M0 org Gitleaks baseline
+#
+# Applied by .github/actions/secret-scan to every calling repo. A --config file
+# REPLACES the upstream rule set, so useDefault is mandatory.
+#
+# Why the extra rules: upstream `generic-api-key` is SEMI-generic. It fires only
+# when the identifier contains access/api/auth/credential/key/password/secret/
+# token. `PRIVATE_KEY=0x<64 hex>` is caught; `deployer_pk=0x<64 hex>` is not.
+# These rules match the 32-byte hex shape itself.
+#
+# A private key and a keccak256 / sha256 digest are identical in shape. That is
+# deliberate: new 32-byte literals are reviewed once, then removed or
+# allow-listed in the repo's .gitleaks.toml / .gitleaksignore.
+#
+# Repo-level .gitleaks.toml is still supported: the action makes that file
+# extend THIS baseline (allow-lists only — do not copy these rules).
+###############################################################################
+
+title = "m0 org gitleaks"
+
+[extend]
+useDefault = true
+
+# Public EVM addresses (20 bytes) are on-chain data, not credentials.
+# regexTarget = "secret" so a line that also contains a 32-byte key is not
+# cleared just because an address appears somewhere on it.
+# Keep a single [allowlist]. Gitleaks 8.24 (the version the action installs)
+# only applies that global block. A second [[allowlists]] is ignored there,
+# and 8.30 refuses to load both forms together.
+[allowlist]
+description = "Public EVM addresses and 1Password refs"
+regexTarget = "secret"
+regexes = [
+  '''^0x[0-9a-fA-F]{40}$''',
+  # Anvil/Hardhat account #0 key (Foundry docs).
+  '''^0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80$''',
+  # bytes32(0) / DEFAULT_ADMIN_ROLE and 0x..01 dummy keys.
+  '''^0x0{63}[01]$''',
+  # 1Password references. `op run` injects the secret at runtime.
+  '''^op://\S+$''',
+]
+
+[[rules]]
+id = "evm-32-byte-hex"
+description = "32-byte hex literal (0x + 64 hex) — possible EVM private key"
+# The match includes a short prefix so the typehash allowlist can see a name
+# on the previous line. secretGroup keeps the finding value as the hex only.
+regex = '''(?s).{0,240}?(\b0x[0-9a-fA-F]{64}\b)'''
+secretGroup = 1
+keywords = ["0x"]
+
+# Rule allowlists are a list, so each one can use its own regexTarget.
+# The global [allowlist] cannot: 8.24 applies only one global block.
+[[rules.allowlists]]
+description = "Universally public 32-byte values"
+regexTarget = "secret"
+regexes = [
+  # Anvil/Hardhat account #0 key (address 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266).
+  # Published in the Foundry docs; used in tests so privateKeyToAccount succeeds.
+  '''^0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80$''',
+  # bytes32(0) — DEFAULT_ADMIN_ROLE — and the 0x..01 dummy PRIVATE_KEY in tests.
+  '''^0x0{63}[01]$''',
+]
+
+# regexTarget = "match" sees the prefix captured above, including
+# `bytes32 ... TYPEHASH =\n    0x<64>`. The hex under test is at the end of
+# the match, so a PRIVATE_KEY written the same way stays a finding.
+# `bytes32` is required so a comment that merely says TYPEHASH = 0x<64>
+# is still reported.
+[[rules.allowlists]]
+description = "EIP-712 typehashes and ERC-7201 storage slots"
+regexTarget = "match"
+regexes = [
+  '''(?is)bytes32\b.{0,180}?(TYPEHASH|STORAGE_LOCATION)\b\s*=\s*0x[0-9a-fA-F]{64}\b\s*$''',
+]
+
+# Path skip for this rule only. Upstream rules still scan these files, so a
+# named key committed under broadcast/ remains a finding.
+[[rules.allowlists]]
+description = "Foundry broadcast artifacts for the 0x 32-byte rule"
+paths = [
+  '''(^|/)broadcast/''',
+]
+
+# Keys are often written WITHOUT the 0x prefix in .env files
+# (deployer_pk=4c0883...), which the rule above cannot see.
+[[rules]]
+id = "bare-32-byte-hex"
+description = "32-byte hex literal without 0x prefix — possible EVM private key"
+regex = '''\b[0-9a-fA-F]{64}\b'''
+
+[rules.allowlist]
+description = "Lockfiles, Foundry broadcast artifacts, and bytes32(0)/0x..01 without 0x prefix"
+regexTarget = "secret"
+regexes = [
+  '''^0{63}[01]$''',
+]
+paths = [
+  '''(^|/)broadcast/''',
+  '''(^|/)package-lock\.json$''',
+  '''(^|/)npm-shrinkwrap\.json$''',
+  '''(^|/)yarn\.lock$''',
+  '''(^|/)pnpm-lock\.yaml$''',
+  '''(^|/)bun\.lockb?$''',
+  '''(^|/)Cargo\.lock$''',
+  '''(^|/)go\.sum$''',
+  '''(^|/)composer\.lock$''',
+  '''(^|/)poetry\.lock$''',
+  '''(^|/)uv\.lock$''',
+  '''(^|/)Gemfile\.lock$''',
+  '''(^|/)flake\.lock$''',
+  '''(^|/)\.terraform\.lock\.hcl$''',
+]

@@ -1,0 +1,29 @@
+###############################################################################
+# Verify the org Gitleaks baseline against fixture files (not a full git scan).
+# Do not add a gitleaks-git caller here: testdata/should-fail is synthetic.
+###############################################################################
+
+name: Test Gitleaks config
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fixtures:
+    name: Org baseline fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+
+      - name: Run fixture tests
+        run: ./scripts/test-gitleaks-config.sh
