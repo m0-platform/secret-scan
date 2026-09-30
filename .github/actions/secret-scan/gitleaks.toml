@@ -29,12 +29,8 @@ useDefault = true
 # only applies that global block. A second [[allowlists]] is ignored there,
 # and 8.30 refuses to load both forms together.
 [allowlist]
-description = "Public EVM addresses, 1Password refs, and Foundry broadcast artifacts"
+description = "Public EVM addresses and 1Password refs"
 regexTarget = "secret"
-# Foundry broadcast JSON is transaction hashes, logs, and bytecode.
-paths = [
-  '''(^|/)broadcast/''',
-]
 regexes = [
   '''^0x[0-9a-fA-F]{40}$''',
   # Anvil/Hardhat account #0 key (Foundry docs).
@@ -68,14 +64,23 @@ regexes = [
 ]
 
 # regexTarget = "match" sees the prefix captured above, including
-# `TYPEHASH =\n    0x<64>`. The hex under test is at the end of the match,
-# so a PRIVATE_KEY written the same way, or a key on the next line after a
-# typehash, stays a finding.
+# `bytes32 ... TYPEHASH =\n    0x<64>`. The hex under test is at the end of
+# the match, so a PRIVATE_KEY written the same way stays a finding.
+# `bytes32` is required so a comment that merely says TYPEHASH = 0x<64>
+# is still reported.
 [[rules.allowlists]]
 description = "EIP-712 typehashes and ERC-7201 storage slots"
 regexTarget = "match"
 regexes = [
-  '''(?is)[\w.]*(TYPEHASH|STORAGE_LOCATION)\b\s*=\s*0x[0-9a-fA-F]{64}\b\s*$''',
+  '''(?is)bytes32\b.{0,180}?(TYPEHASH|STORAGE_LOCATION)\b\s*=\s*0x[0-9a-fA-F]{64}\b\s*$''',
+]
+
+# Path skip for this rule only. Upstream rules still scan these files, so a
+# named key committed under broadcast/ remains a finding.
+[[rules.allowlists]]
+description = "Foundry broadcast artifacts for the 0x 32-byte rule"
+paths = [
+  '''(^|/)broadcast/''',
 ]
 
 # Keys are often written WITHOUT the 0x prefix in .env files
@@ -86,12 +91,13 @@ description = "32-byte hex literal without 0x prefix — possible EVM private ke
 regex = '''\b[0-9a-fA-F]{64}\b'''
 
 [rules.allowlist]
-description = "Lockfiles, checksum manifests, and bytes32(0)/0x..01 without 0x prefix"
+description = "Lockfiles, Foundry broadcast artifacts, and bytes32(0)/0x..01 without 0x prefix"
 regexTarget = "secret"
 regexes = [
   '''^0{63}[01]$''',
 ]
 paths = [
+  '''(^|/)broadcast/''',
   '''(^|/)package-lock\.json$''',
   '''(^|/)npm-shrinkwrap\.json$''',
   '''(^|/)yarn\.lock$''',

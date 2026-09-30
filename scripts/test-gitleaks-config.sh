@@ -60,6 +60,13 @@ if wrapped_key not in after:
     raise SystemExit("KeyAfterTypehash.sol did not flag the private key after the typehash")
 if typehash in after:
     raise SystemExit("KeyAfterTypehash.sol flagged the TYPEHASH")
+if wrapped_key not in by_file.get("CommentTypehash.sol", []):
+    raise SystemExit("CommentTypehash.sol did not flag a TYPEHASH comment")
+broadcast = [f for f in findings if f["File"].endswith("broadcast/leaked.env")]
+if not broadcast:
+    raise SystemExit("broadcast/leaked.env was ignored entirely")
+if not any(f.get("RuleID") != "evm-32-byte-hex" for f in broadcast):
+    raise SystemExit("broadcast/leaked.env was only caught by the path-skipped hex rule")
 print(f"found {len(findings)} finding(s) covering {sorted(needed)}")
 PY
 
@@ -87,5 +94,43 @@ ORG_CONFIG="$ORG_CONFIG" REPO_CONFIG="$repo_toml" EFFECTIVE_CONFIG="$effective" 
 grep -q "path = \".*gitleaks.toml\"" "$effective"
 grep -q "useDefault" "$effective" && { echo "ERROR: useDefault should have been replaced"; exit 1; }
 grep -q "0xdead" "$effective"
+
+echo "==> compose-config.py accepts indented useDefault"
+indented="${tmp}/indented.toml"
+cat > "$indented" <<'TOML'
+[extend]
+  useDefault = true  # org baseline replaces this
+TOML
+ORG_CONFIG="$ORG_CONFIG" REPO_CONFIG="$indented" EFFECTIVE_CONFIG="${tmp}/indented-out.toml" \
+  python3 "${ROOT}/.github/actions/secret-scan/compose-config.py"
+grep -q "useDefault" "${tmp}/indented-out.toml" && { echo "ERROR: indented useDefault left in place"; exit 1; }
+
+expect_reject() {
+  local name="$1"
+  local body="$2"
+  local file="${tmp}/${name}.toml"
+  printf '%s\n' "$body" > "$file"
+  if ORG_CONFIG="$ORG_CONFIG" REPO_CONFIG="$file" EFFECTIVE_CONFIG="${tmp}/${name}-out.toml" \
+    python3 "${ROOT}/.github/actions/secret-scan/compose-config.py"; then
+    echo "ERROR: ${name} should have been rejected" >&2
+    exit 1
+  fi
+}
+
+echo "==> compose-config.py rejects rule overrides and useDefault = false"
+expect_reject "use-default-false" "$(cat <<'TOML'
+[extend]
+useDefault = false
+TOML
+)"
+expect_reject "copied-rule" "$(cat <<'TOML'
+[extend]
+useDefault = true
+
+[[rules]]
+id = "evm-32-byte-hex"
+regex = '''not-a-key'''
+TOML
+)"
 
 echo "gitleaks org baseline fixtures passed"
